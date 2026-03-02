@@ -130,7 +130,10 @@ function ResetPasswordForm() {
             }}
           >
             IA Vanguard
-          </span> (
+          </span>
+        </Link>
+
+        {success ? (
           <div style={{ textAlign: "center", padding: "24px 0" }}>
             <CheckCircle
               size={48}

@@ -72,7 +72,10 @@ export default function ForgotPasswordPage() {
             }}
           >
             IA Vanguard
-          </span> (
+          </span>
+        </Link>
+
+        {sent ? (
           <div style={{ textAlign: "center", padding: "24px 0" }}>
             <CheckCircle
               size={48}
