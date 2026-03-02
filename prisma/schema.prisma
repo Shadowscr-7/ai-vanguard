@@ -1,0 +1,146 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ==========================================
+// AUTH MODELS (NextAuth compatible)
+// ==========================================
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  role          Role      @default(USER)
+  banned        Boolean   @default(false)
+  bannedAt      DateTime?
+  bannedReason  String?
+  freePass      Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts       Account[]
+  sessions       Session[]
+  purchases      Purchase[]
+  courseProgress  CourseProgress[]
+  reviews        Review[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+// ==========================================
+// BUSINESS MODELS
+// ==========================================
+
+model Purchase {
+  id          String   @id @default(cuid())
+  userId      String
+  productId   String   // e.g. "curso-basico", "nivel-1", "definitive"
+  productType String   // "course" | "bundle"
+  amount      Float
+  currency    String   @default("USD")
+  paypalOrderId String?
+  status      String   @default("completed") // "pending" | "completed" | "refunded"
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+model CourseProgress {
+  id        String   @id @default(cuid())
+  userId    String
+  courseId   String
+  videoId    String
+  watchedAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId, videoId])
+  @@index([userId, courseId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  videoId   String
+  rating    Int      // 1-5
+  text      String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoId])
+  @@index([videoId])
+}
+
+// ==========================================
+// CMS — Editable site content (JSON store)
+// ==========================================
+
+model SiteContent {
+  key       String   @id          // "books" | "bundles" | "courses"
+  data      Json                  // The full array for that content type
+  updatedAt DateTime @default(now()) @updatedAt
+}
