@@ -30,6 +30,9 @@ export default function Footer() {
         </div>
         <div className="footer-bottom">
           <p>© {new Date().getFullYear()} IA Vanguard. Todos los derechos reservados.</p>
+          <p style={{ marginTop: "0.25rem", fontSize: "0.8rem", opacity: 0.6 }}>
+            Razón social: Julio Gómez
+          </p>
         </div>
       </div>
     </footer>
